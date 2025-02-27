@@ -1,57 +1,126 @@
-# Price Service
+# ORAO Price Service SDK
 
-[Orao Network](https://orao.network/) provides real-time pricing data in a variety of asset classes, including
-cryptocurrency, equities, FX and commodities.
-These prices are available either via HTTP.
+This JavaScript/TypeScript SDK provides a client for interacting with the ORAO Price Service API. It allows users to
+fetch price feeds for various assets across different networks.
+
+## Features
+
+- Fetch available networks
+- Retrieve whitelists for specific networks
+- Get latest price feeds for specified assets on a given network
 
 ## Installation
 
-### npm
-
-```
-$ npm install --save @orao-network/price-service
-```
-
-### Yarn
-
-```
-$ yarn add @orao-network/price-service
-```
-
-## Quickstart
-
-Typical usage of the connection is along the following lines:
-
-```typescript
-const priceService = new PriceService("https://prices.orao.network");
-
-// Get the available networks.
-const networks = await priceService.getNetworks();
-
-// Get the whitelist
-const whitelist = await priceService.getWhitelist(networks[0]);
-
-// Get the latest values of the price feeds as json objects.
-const priceFeed = await priceService.getLatestPriceFeeds(network, whitelist[0]);
-```
-
-### On-chain Applications
-
-On-chain applications will need to submit the price updates returned by price service to the ORAO oracle contract on
-their blockchain.
-This option will add a `message` field to `PriceFeed` that represents a signed price update.
-The `message` is a binary blob serialized as a base64 string.
-Depending on the blockchain, you may need to reformat this into hex or another format before submitting it to the oracle
-contract.
-
-### Examples
-
-The [PriceService](./src/examples/PriceServiceDemo.ts) example demonstrates the HTTP APIs
-described above.
-You can run it with `npm run example`.
-A full command that prints BTC and ETH price feeds, in the testnet network, looks like so:
+To use this SDK in your project, install it via npm:
 
 ```bash
-npm run example -- \
-  --endpoint https://prices.orao.network
+npm install @orao-network/price-service-sdk
 ```
+
+## Usage
+
+Here's a basic example of how to use the SDK:
+
+```typescript
+import {
+  PriceService,
+  PriceServiceConfig,
+} from "@orao-network/price-service-sdk";
+
+// Initialize the PriceService
+const config: PriceServiceConfig = {
+  authToken: "your_auth_token",
+  timeout: 5000,
+  httpRetries: 3,
+  logger: console,
+};
+
+const priceService = new PriceService("https://api.example.com", config);
+
+// Get available networks
+priceService
+  .getNetworks()
+  .then((networks) => console.log("Available networks:", networks))
+  .catch((error) => console.error("Error fetching networks:", error));
+
+// Get whitelist for a specific network
+priceService
+  .getWhitelist("price-secp256k1")
+  .then((whitelist) => console.log("price-secp256k1 whitelist:", whitelist))
+  .catch((error) => console.error("Error fetching whitelist:", error));
+
+// Get latest price feeds
+const assetNames = ["bitcoin", "ethereum"];
+priceService
+  .getLatestPriceFeeds("price-secp256k1", assetNames)
+  .then((priceFeed) => console.log("Latest price feed:", priceFeed))
+  .catch((error) => console.error("Error fetching price feeds:", error));
+```
+
+## API Reference
+
+### `PriceService`
+
+The main class for interacting with the ORAO Price Service API.
+
+#### Constructor
+
+```typescript
+constructor(endpoint
+:
+string, config ? : PriceServiceConfig
+)
+```
+
+- `endpoint`: The base URL of the ORAO Price Service API.
+- `config`: Optional configuration object.
+
+#### Methods
+
+##### `getNetworks(): Promise<string[]>`
+
+Fetches the list of available networks.
+
+##### `getWhitelist(network: string): Promise<string[]>`
+
+Retrieves the whitelist for a specified network.
+
+##### `getLatestPriceFeeds(network: string, assetNames: string[]): Promise<PriceFeed>`
+
+Retrieves the latest price feeds for specified assets on a given network.
+
+### Types
+
+#### `PriceServiceConfig`
+
+```typescript
+{
+  authToken ? : string;
+  timeout ? : number;
+  httpRetries ? : number;
+  logger ? : Logger;
+}
+```
+
+#### `PriceFeed`
+
+```typescript
+{
+  epoch: number;
+  requestHash: string;
+  configHash: string;
+  prices: Record<string, string>;
+  signatures: Record<string, string>;
+  message: string;
+}
+```
+
+## Error Handling
+
+All methods return Promises that may reject with errors. It's recommended to use try-catch blocks or .catch() methods to
+handle potential errors.
+
+## Logging
+
+The SDK uses a configurable logger. You can provide your own logger implementation or use the default console logger for
+warnings and errors.

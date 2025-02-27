@@ -40,9 +40,9 @@ export interface PriceFeed {
   epoch: number;
   requestHash: string;
   configHash: string;
-  prices?: Record<string, string>;
-  signatures?: Record<string, string>;
-  message?: string;
+  prices: Record<string, string>;
+  signatures: Record<string, string>;
+  message: string;
 }
 
 export class PriceService {
@@ -124,24 +124,24 @@ export class PriceService {
    * to retrieve the most recent price information for the specified assets.
    *
    * @param network - The name or identifier of the network for which to fetch price feeds.
-   * @param priceNames - An array of asset names or identifiers for which to fetch price feeds.
-   * @returns A Promise that resolves to a PriceFeed object containing the latest price information,
-   *          or undefined if the priceNames array is empty.
+   * @param assetNames - An array of asset names or identifiers for which to fetch price feeds.
+   * @returns A Promise that resolves to a PriceFeed object containing the latest price information.
+   * @throws {Error} If the assetNames array is empty.
    * @throws Will throw an error if the HTTP request fails or if the response cannot be parsed correctly.
    */
   async getLatestPriceFeeds(
     network: string,
-    priceNames: string[]
-  ): Promise<PriceFeed | undefined> {
-    if (priceNames.length === 0) {
-      return undefined;
+    assetNames: string[]
+  ): Promise<PriceFeed> {
+    if (assetNames.length === 0) {
+      throw new Error("asset names array is empty");
     }
 
     const response = await this.httpClient.get(`/api/network/feed/get`, {
       params: {
         network,
         qualifier: "cmc",
-        slugs: priceNames.join(","),
+        slugs: assetNames.join(","),
       },
     });
     const priceFeedsJson = response.data;
